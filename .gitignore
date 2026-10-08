@@ -5,7 +5,8 @@ supabase_admin_dashboard.sql
 supabase_checkout.sql
 supabase_storage.sql
 supabase_store_pricing.sql
-
+supabase_brand_categories.sql
+README.md
 
 # Logs
 logs
