@@ -1,0 +1,83 @@
+:root {
+  font-family: Inter, 'Segoe UI', Arial, sans-serif;
+  color: #292920;
+  background: #fffdf9;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  --ink: #292920;
+  --accent: #a35139;
+  --line: #e9e5dc;
+  --page: #fffdf9;
+  --surface: #fffdf9;
+  --surface-raised: #f7f4ed;
+  --muted: #77746a;
+  --serif: 'Iowan Old Style', 'Palatino Linotype', 'Book Antiqua', Georgia, serif;
+  --sans: Inter, 'Segoe UI', Arial, sans-serif;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  color: #f0eee8;
+  background: #171816;
+  --ink: #f0eee8;
+  --accent: #d18a6e;
+  --line: #393a35;
+  --page: #171816;
+  --surface: #20211e;
+  --surface-raised: #282925;
+  --muted: #b0ada3;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-width: 320px;
+  scroll-behavior: smooth;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+  background: var(--page);
+  color: var(--ink);
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 2px solid #a35139;
+  outline-offset: 3px;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}
+
+::selection {
+  background: #a35139;
+  color: white;
+}
