@@ -52,10 +52,18 @@ export default function LayoutPage() {
             <div><span className="eyebrow">Edit without a code deployment</span><h2>Store branding &amp; homepage text</h2></div>
           </div>
           <div className="admin-form-grid">
-            {HOMEPAGE_CONTENT_FIELDS.map(({ key, label, multiline }) => (
+            {HOMEPAGE_CONTENT_FIELDS.map(({ key, label, multiline, select }) => (
               <label className={`admin-field${multiline ? ' homepage-content-field--wide' : ''}`} key={key}>
                 <span>{label}</span>
-                {multiline ? (
+                {select ? (
+                  <select
+                    value={content[key]}
+                    onChange={(event) => setContent((current) => ({ ...current, [key]: event.target.value }))}
+                  >
+                    <option value="static">Static image</option>
+                    <option value="slider">Image slider</option>
+                  </select>
+                ) : multiline ? (
                   <textarea
                     required
                     maxLength="500"

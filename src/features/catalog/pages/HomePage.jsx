@@ -1,14 +1,40 @@
-import { ArrowDownRight, ArrowRight, BadgeCheck, Truck } from 'lucide-react'
+import { ArrowDownRight, ArrowLeft, ArrowRight, BadgeCheck, Truck } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import ProductGrid from '../components/ProductGrid'
 import { useCatalog } from '../../../app/providers'
 
 export default function HomePage() {
   const { products, categories, featureImages, featuredImagePath, homepageContent, loading, error } = useCatalog()
+  const [activeHeroImageIndex, setActiveHeroImageIndex] = useState(0)
   const feature = products[0]
   const selectedFeatureImage = featureImages.find((image) => image.path === featuredImagePath)
-  const heroImage = selectedFeatureImage?.url || featureImages?.[0]?.url || feature?.image
+  const useHeroSlider = homepageContent.heroImageMode === 'slider' && featureImages.length > 0
+  const heroSlides = useHeroSlider
+    ? featureImages
+    : selectedFeatureImage
+      ? [selectedFeatureImage]
+      : featureImages.slice(0, 1)
+  const currentHeroImageIndex = heroSlides.length
+    ? activeHeroImageIndex % heroSlides.length
+    : 0
+  const activeHeroImage = heroSlides.length
+    ? heroSlides[currentHeroImageIndex]
+    : null
+  const heroImage = activeHeroImage?.url || feature?.image
   const categoryProducts = categories.slice(0, 4)
+
+  useEffect(() => {
+    if (!useHeroSlider || heroSlides.length < 2) return undefined
+    const timer = window.setInterval(() => {
+      setActiveHeroImageIndex((index) => (index + 1) % heroSlides.length)
+    }, 5000)
+    return () => window.clearInterval(timer)
+  }, [heroSlides.length, useHeroSlider])
+
+  const showHeroSlide = (index) => {
+    setActiveHeroImageIndex((index + heroSlides.length) % heroSlides.length)
+  }
 
   return (
     <>
@@ -23,8 +49,18 @@ export default function HomePage() {
           <a className="hero__scroll" href="#collection"><ArrowDownRight size={16} /> {homepageContent.heroScroll}</a>
         </div>
         <div className="hero__visual">
-          {heroImage ? (
-            <img className="hero__image" src={heroImage} alt={selectedFeatureImage || featureImages?.[0] ? 'Featured collection' : feature?.name} />
+          {useHeroSlider && heroSlides.length > 1 ? (
+            <div
+              className="hero-slider__track"
+              style={{ transform: `translateX(-${currentHeroImageIndex * 100}%)` }}
+              aria-live="off"
+            >
+              {heroSlides.map((image) => (
+                <img className="hero__image" key={image.path} src={image.url} alt={image.name} />
+              ))}
+            </div>
+          ) : heroImage ? (
+            <img className="hero__image" src={heroImage} alt={activeHeroImage ? activeHeroImage.name : feature?.name || 'Featured collection'} />
           ) : (
             <div className="hero__image hero__image--art" aria-hidden="true">
               <span className="hero-art__sun" />
@@ -32,10 +68,34 @@ export default function HomePage() {
               <span className="hero-art__line">{homepageContent.heroArtwork.split('\n').map((line, index) => <span key={`${line}-${index}`}>{index > 0 && <br />}{line}</span>)}</span>
             </div>
           )}
+          {useHeroSlider && heroSlides.length > 1 && (
+            <>
+              <button className="hero-slider__arrow hero-slider__arrow--previous" type="button" aria-label="Previous featured image" onClick={() => showHeroSlide(currentHeroImageIndex - 1)}>
+                <ArrowLeft size={17} />
+              </button>
+              <button className="hero-slider__arrow hero-slider__arrow--next" type="button" aria-label="Next featured image" onClick={() => showHeroSlide(currentHeroImageIndex + 1)}>
+                <ArrowRight size={17} />
+              </button>
+              <div className="hero-slider__dots" aria-label="Choose featured image">
+                {heroSlides.map((image, index) => (
+                  <button
+                    className={`hero-slider__dot${index === currentHeroImageIndex ? ' is-active' : ''}`}
+                    key={image.path}
+                    type="button"
+                    aria-label={`Show featured image ${index + 1}`}
+                    aria-current={index === currentHeroImageIndex ? 'true' : undefined}
+                    onClick={() => showHeroSlide(index)}
+                  />
+                ))}
+              </div>
+            </>
+          )}
           <div className="hero__sticker"><span>{homepageContent.heroSticker.split('\n').map((line, index) => <span key={`${line}-${index}`}>{index > 0 && <br />}{line}</span>)}</span><span>✳</span></div>
           <div className="hero__caption">
             <span className="eyebrow">{homepageContent.heroCaption}</span>
-            <span>01 / 04</span>
+            {useHeroSlider && heroSlides.length > 1 && (
+              <span>{String(currentHeroImageIndex + 1).padStart(2, '0')} / {String(heroSlides.length).padStart(2, '0')}</span>
+            )}
           </div>
         </div>
         <span className="hero__index">{homepageContent.heroIndex}</span>

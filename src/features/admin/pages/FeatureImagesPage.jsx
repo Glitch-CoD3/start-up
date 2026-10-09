@@ -105,7 +105,7 @@ export default function FeatureImagesPage() {
       </header>
       <section className="admin-form-card admin-feature-upload">
         <div className="admin-section__heading"><div><span className="eyebrow">Upload to Supabase Storage</span><h2>Website feature images</h2></div></div>
-        <p className="admin-message">Uploaded files are stored in <code>e-commerce/{FEATURE_IMAGE_FOLDER}/</code>. Select an image below to use it in the storefront homepage hero.</p>
+        <p className="admin-message">Uploaded files are stored in <code>e-commerce/{FEATURE_IMAGE_FOLDER}/</code>. Select the static homepage hero image below, or set <strong>Layout → Homepage feature image display</strong> to Image slider to cycle through all uploaded feature images.</p>
         <ImageUploader images={[]} folder={FEATURE_IMAGE_FOLDER} onChange={refresh} />
       </section>
       {error && <div className="notice notice--error" role="alert">{error}</div>}

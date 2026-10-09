@@ -1,6 +1,7 @@
 export const DEFAULT_HOMEPAGE_CONTENT = {
   browserTitle: 'Trendlama — Wear what feels like you',
   logoName: 'TRENDLAMA',
+  heroImageMode: 'static',
   heroEyebrow: 'The new everyday',
   heroHeading: 'Wear what',
   heroEmphasis: 'feels like you.',
@@ -33,6 +34,7 @@ export const DEFAULT_HOMEPAGE_CONTENT = {
 export const HOMEPAGE_CONTENT_FIELDS = [
   { key: 'browserTitle', label: 'Browser tab title' },
   { key: 'logoName', label: 'Logo name' },
+  { key: 'heroImageMode', label: 'Homepage feature image display', select: true },
   { key: 'heroEyebrow', label: 'Hero eyebrow' },
   { key: 'heroHeading', label: 'Hero heading' },
   { key: 'heroEmphasis', label: 'Hero emphasized text' },
