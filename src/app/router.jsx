@@ -11,6 +11,7 @@ const ProductDetailPage = lazy(() => import('../features/catalog/pages/ProductDe
 const CartPage = lazy(() => import('../features/cart/pages/CartPage'))
 const ProfilePage = lazy(() => import('../features/account/pages/ProfilePage'))
 const AddressesPage = lazy(() => import('../features/account/pages/AddressesPage'))
+const ContactPage = lazy(() => import('../features/account/pages/ContactPage'))
 const AuthPage = lazy(() => import('../features/auth/pages/AuthPage'))
 const ForgotPasswordPage = lazy(() => import('../features/auth/pages/ForgotPasswordPage'))
 const ResetPasswordPage = lazy(() => import('../features/auth/pages/ResetPasswordPage'))
@@ -19,7 +20,10 @@ const AdminProductsPage = lazy(() => import('../features/admin/pages/ProductsPag
 const AdminProductEditPage = lazy(() => import('../features/admin/pages/ProductEditPage'))
 const AdminInventoryPage = lazy(() => import('../features/admin/pages/InventoryPage'))
 const AdminOrdersPage = lazy(() => import('../features/admin/pages/OrdersPage'))
+const AdminCancelledOrdersPage = lazy(() => import('../features/admin/pages/CancelledOrdersPage'))
+const AdminAnalyticsPage = lazy(() => import('../features/admin/pages/AnalyticsPage'))
 const AdminOrderDetailPage = lazy(() => import('../features/admin/pages/OrderDetailPage'))
+const AdminCustomerQueriesPage = lazy(() => import('../features/admin/pages/CustomerQueriesPage'))
 const AdminCategoriesPage = lazy(() => import('../features/admin/pages/CategoriesPage'))
 const AdminBrandsPage = lazy(() => import('../features/admin/pages/BrandsPage'))
 const AdminFeatureImagesPage = lazy(() => import('../features/admin/pages/FeatureImagesPage'))
@@ -69,6 +73,14 @@ export default function AppRouter() {
               </RequireAuth>
             }
           />
+          <Route
+            path="contact"
+            element={
+              <RequireAuth>
+                <ContactPage />
+              </RequireAuth>
+            }
+          />
         </Route>
         <Route path="login" element={<AuthPage mode="login" />} />
         <Route path="signup" element={<AuthPage mode="signup" />} />
@@ -93,7 +105,10 @@ export default function AppRouter() {
           <Route path="layout" element={<AdminLayoutPage />} />
           <Route path="settings" element={<AdminSettingsPage />} />
           <Route path="orders" element={<AdminOrdersPage />} />
+          <Route path="cancelled-orders" element={<AdminCancelledOrdersPage />} />
+          <Route path="analytics" element={<AdminAnalyticsPage />} />
           <Route path="orders/:id" element={<AdminOrderDetailPage />} />
+          <Route path="queries" element={<AdminCustomerQueriesPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

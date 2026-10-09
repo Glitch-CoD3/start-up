@@ -1,4 +1,4 @@
-import { ArrowRight, LogOut, MapPin, PackageCheck, ShoppingBag, UserRound } from 'lucide-react'
+import { ArrowRight, LogOut, MapPin, MessageCircle, PackageCheck, ShoppingBag, UserRound } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
@@ -44,6 +44,7 @@ export default function ProfilePage() {
           <Link to="/shop"><span><ShoppingBag size={18} /> Keep shopping</span><ArrowRight size={16} /></Link>
           <Link to="/cart"><span><PackageCheck size={18} /> Your bag <small>{count} {count === 1 ? 'piece' : 'pieces'}</small></span><ArrowRight size={16} /></Link>
           <Link to="/account/addresses"><span><MapPin size={18} /> Delivery addresses</span><ArrowRight size={16} /></Link>
+          <Link to="/contact"><span><MessageCircle size={18} /> Contact support</span><ArrowRight size={16} /></Link>
         </div>
         <button className="account-signout" type="button" onClick={signOut} disabled={signingOut}>
           <LogOut size={16} /> {signingOut ? 'Signing out…' : 'Sign out'}

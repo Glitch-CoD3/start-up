@@ -2,7 +2,7 @@ import { ArrowRight, Boxes, CircleDollarSign, Package, ShoppingBag, Users } from
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../../app/providers'
-import { getDashboardSummary } from '../api'
+import { getDashboardSummary, getInventory, LOW_STOCK_THRESHOLD } from '../api'
 import DataTable from '../components/DataTable'
 
 const DASHBOARD_CACHE_KEY = 'trendlama-admin-dashboard'
@@ -50,14 +50,30 @@ export default function DashboardPage() {
   const { user } = useAuth()
   const [initialCache] = useState(() => readCachedSummary(user.id))
   const [summary, setSummary] = useState(() => initialCache?.summary ?? null)
+  const [lowStockItems, setLowStockItems] = useState([])
   const [error, setError] = useState('')
+  const [inventoryError, setInventoryError] = useState('')
   const [loading, setLoading] = useState(() => !initialCache?.summary)
 
   useEffect(() => {
-    if (initialCache?.cachedAt && Date.now() - initialCache.cachedAt < DASHBOARD_CACHE_TTL) {
-      return undefined
-    }
     let active = true
+    getInventory()
+      .then((inventory) => {
+        if (active) {
+          setLowStockItems(
+            inventory.filter((item) => item.available_quantity < LOW_STOCK_THRESHOLD),
+          )
+          setInventoryError('')
+        }
+      })
+      .catch((cause) => {
+        console.error('Could not check low inventory.', cause)
+        if (active) setInventoryError(cause.message || 'Low-stock status could not be checked.')
+      })
+
+    if (initialCache?.cachedAt && Date.now() - initialCache.cachedAt < DASHBOARD_CACHE_TTL) {
+      return () => { active = false }
+    }
     loadDashboardSummary(user.id)
       .then((data) => {
         if (!active) return
@@ -93,6 +109,13 @@ export default function DashboardPage() {
         <Link className="admin-button admin-button--light" to="/admin/inventory"><Boxes size={16} /> Manage inventory</Link>
       </header>
       {error && <div className="notice notice--error" role="alert">{error}</div>}
+      {inventoryError && <div className="notice notice--error" role="alert">{inventoryError}</div>}
+      {!inventoryError && lowStockItems.length > 0 && (
+        <div className="notice notice--warning" role="alert">
+          <strong>Low stock alert: {lowStockItems.length} {lowStockItems.length === 1 ? 'item' : 'items'} below {LOW_STOCK_THRESHOLD} available.</strong>
+          {' '}<Link className="admin-inline-link" to="/admin/inventory">Review inventory <ArrowRight size={14} /></Link>
+        </div>
+      )}
       {loading ? <p className="admin-message">Loading store overview…</p> : summary && (
         <>
           <section className="admin-stat-grid" aria-label="Store statistics">

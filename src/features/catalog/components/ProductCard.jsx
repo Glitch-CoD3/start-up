@@ -60,6 +60,9 @@ export default function ProductCard({ product, index = 0 }) {
               <><del>{formatCurrency(variant?.base_price ?? product.base_price)}</del> {formatCurrency(price)}</>
             ) : formatCurrency(price)}
           </p>
+          <p className={`product-card__stock${stock <= 0 ? ' is-unavailable' : ''}`}>
+            {stock > 0 ? `${stock} ${stock === 1 ? 'unit' : 'units'} in stock` : 'Out of stock'}
+          </p>
         </div>
         <button
           className="icon-button product-card__add"

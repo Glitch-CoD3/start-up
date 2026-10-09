@@ -4,7 +4,7 @@ export async function getUserOrders(userId) {
   const client = await requireSupabase()
   const { data: orders, error: ordersError } = await client
     .from('orders')
-    .select('id,order_number,total_amount,discount_amount,shipping_charge,net_amount,status,payment_status,payment_method,transaction_number,created_at')
+    .select('id,order_number,total_amount,discount_amount,shipping_charge,net_amount,status,payment_status,payment_method,transaction_number,cancellation_request_status,cancellation_requested_at,created_at')
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
 
@@ -42,6 +42,15 @@ export async function getUserOrders(userId) {
     items: itemsByOrder.get(order.id) ?? [],
     shippingAddress: addressesByOrder.get(order.id) ?? null,
   }))
+}
+
+export async function requestOrderCancellation(orderId) {
+  const client = await requireSupabase()
+  const { data, error } = await client.rpc('request_order_cancellation', {
+    p_order_id: orderId,
+  })
+  if (error) throw error
+  return data
 }
 
 
@@ -85,4 +94,30 @@ export async function deleteUserAddress(userId, addressId) {
     .eq('user_id', userId)
 
   if (error) throw error
+}
+
+export async function getCustomerQueries() {
+  const client = await requireSupabase()
+  const { data, error } = await client.rpc('get_my_customer_queries')
+  if (error) throw error
+  return data ?? []
+}
+
+export async function submitCustomerQuery(subject, message) {
+  const cleanSubject = subject.trim()
+  const cleanMessage = message.trim()
+  if (!cleanSubject || cleanSubject.length > 160) {
+    throw new Error('Subject must contain 1 to 160 characters.')
+  }
+  if (!cleanMessage || cleanMessage.length > 5000) {
+    throw new Error('Message must contain 1 to 5000 characters.')
+  }
+
+  const client = await requireSupabase()
+  const { data, error } = await client.rpc('submit_customer_query', {
+    p_subject: cleanSubject,
+    p_message: cleanMessage,
+  })
+  if (error) throw error
+  return data
 }

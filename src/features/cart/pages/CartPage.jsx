@@ -98,6 +98,14 @@ export default function CartPage() {
                   <span className="eyebrow">{product.brand || product.category}</span>
                   <Link className="cart-line__name" to={`/product/${product.url_slug || product.id}`}>{product.name}</Link>
                   {variant && <span className="cart-line__variant">{getVariantLabel(variant)}</span>}
+                  <span className={`cart-line__stock${stock < 1 ? ' is-unavailable' : ''}`}>
+                    {stock > 0 ? `${stock} ${stock === 1 ? 'unit' : 'units'} available` : 'Out of stock'}
+                  </span>
+                  {item.quantity > stock && (
+                    <span className="cart-line__stock is-unavailable" role="alert">
+                      Only {stock} available. Reduce the quantity to continue.
+                    </span>
+                  )}
                   <button className="cart-line__remove" type="button" onClick={() => deleteLine(item)}><Trash2 size={14} /> Remove</button>
                 </div>
                 <div className="cart-line__end">

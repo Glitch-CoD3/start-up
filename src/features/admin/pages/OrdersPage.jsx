@@ -12,6 +12,7 @@ export default function OrdersPage() {
     { key: 'customer', label: 'Customer', render: (order) => order.customer?.full_name || 'Customer' },
     { key: 'created_at', label: 'Date', render: (order) => new Date(order.created_at).toLocaleDateString() },
     { key: 'status', label: 'Status', render: (order) => <span className={`admin-pill admin-pill--${order.status}`}>{order.status}</span> },
+    { key: 'cancellation_request_status', label: 'Cancellation', render: (order) => order.cancellation_request_status === 'requested' ? 'Request pending' : order.cancellation_request_status || '—' },
     { key: 'payment_method', label: 'Method', render: (order) => order.payment_method?.replace('_', ' ') || '—' },
     { key: 'payment_status', label: 'Payment', render: (order) => order.payment_status },
     { key: 'net_amount', label: 'Total', render: (order) => money(order.net_amount ?? order.total_amount) },

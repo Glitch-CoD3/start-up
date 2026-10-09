@@ -46,7 +46,7 @@ export default function OrderSuccessPage() {
         <div className="order-thankyou-card__seal"><Check size={24} /></div>
         <span className="eyebrow">A little something to celebrate</span>
         <h1>Thank you for your order<span>.</span></h1>
-        <p className="order-thankyou-card__intro">We’ve received your order and payment reference. Our team will verify the payment before preparing your pieces.</p>
+        <p className="order-thankyou-card__intro">We’ve received your order and payment reference. Our team will verify the payment before preparing your pieces. Unpaid orders are automatically cancelled after 24 hours.</p>
         <div className="order-confirmation-number"><span>Order number</span><strong>{order.order_number}</strong></div>
         <div className="order-confirmation-items">
           {order.items.map((item) => (

@@ -45,7 +45,7 @@ export async function getCatalog() {
   let pricingAvailable = true
   let featuredImageSelectionAvailable = true
   let homepageContentAvailable = true
-  const [productsResult, categoriesResult, brandsResult, variantsResult, pricingResult, featuredImageResult, homepageContentResult, featureImages] =
+  const [productsResult, categoriesResult, brandsResult, variantsResult, pricingResult, reservationsResult, featuredImageResult, homepageContentResult, featureImages] =
     await Promise.all([
       client
         .from('products')
@@ -74,6 +74,7 @@ export async function getCatalog() {
           console.warn(PRICING_MIGRATION_WARNING, result.error)
           return { data: [], error: null }
         }),
+      client.rpc('get_active_stock_reservations'),
       client.rpc(FEATURE_IMAGE_SELECTION_FUNCTION).then((result) => {
         if (!result.error) return result
         if (result.error.code !== 'PGRST202' ||
@@ -104,6 +105,13 @@ export async function getCatalog() {
   const brands = unwrap(brandsResult)
   const variants = unwrap(variantsResult)
   const prices = unwrap(pricingResult)
+  const reservations = unwrap(reservationsResult) ?? []
+  const reservedQuantityByStockId = new Map(
+    reservations.map((reservation) => [
+      `${reservation.product_id}:${reservation.product_variant_id ?? ''}`,
+      Number(reservation.quantity),
+    ]),
+  )
   const pricesByProduct = new Map()
   const pricesByVariant = new Map()
   for (const price of prices) {
@@ -138,6 +146,11 @@ export async function getCatalog() {
     const productVariants = variantsByProduct.get(variant.product_id) ?? []
     productVariants.push({
       ...variant,
+      stock_quantity: Math.max(
+        0,
+        Number(variant.stock_quantity || 0) -
+          (reservedQuantityByStockId.get(`${variant.product_id}:${variant.id}`) ?? 0),
+      ),
       base_price: Number(pricesByVariant.get(variant.id)?.base_price ?? variant.price),
       price: Number(pricesByVariant.get(variant.id)?.final_price ?? variant.price),
       discount_amount: Number(pricesByVariant.get(variant.id)?.discount_amount ?? 0),
@@ -167,7 +180,11 @@ export async function getCatalog() {
               (total, variant) => total + Number(variant.stock_quantity || 0),
               0,
             )
-          : Number(product.stock_quantity || 0),
+          : Math.max(
+              0,
+              Number(product.stock_quantity || 0) -
+                (reservedQuantityByStockId.get(`${product.id}:`) ?? 0),
+            ),
     }
   })
 

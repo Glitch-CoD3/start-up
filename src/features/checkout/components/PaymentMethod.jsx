@@ -89,7 +89,7 @@ export default function PaymentMethod({
       </small>
       <p className="checkout-payment__notice">
         {PAYMENT_METHODS.includes(method)
-          ? 'Payment is recorded as pending verification. We will confirm it before processing your order. / পেমেন্ট যাচাইয়ের অপেক্ষায় থাকবে। অর্ডার প্রক্রিয়া করার আগে আমরা পেমেন্ট নিশ্চিত করব।'
+          ? 'Payment is recorded as pending verification. We will confirm it before processing your order. Unpaid orders are automatically cancelled after 24 hours. / পেমেন্ট যাচাইয়ের অপেক্ষায় থাকবে। অর্ডার প্রক্রিয়া করার আগে আমরা পেমেন্ট নিশ্চিত করব। পেমেন্ট না হলে ২৪ ঘণ্টা পর অর্ডার স্বয়ংক্রিয়ভাবে বাতিল হবে।'
           : ''}
       </p>
     </div>

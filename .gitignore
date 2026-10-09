@@ -7,6 +7,8 @@ supabase_storage.sql
 supabase_store_pricing.sql
 supabase_brand_categories.sql
 README.md
+supabase_order_stock_reservations.sql
+supabase_customer_queries.sql
 
 # Logs
 logs

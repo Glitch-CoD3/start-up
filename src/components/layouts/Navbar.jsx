@@ -1,6 +1,6 @@
 import { ArrowRight, Menu, UserRound, X } from 'lucide-react'
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { Link, useLocation } from 'react-router-dom'
 import { useAuth, useCatalog } from '../../app/providers'
 import CartIcon from '../../features/cart/components/CartIcon'
 import SearchBar from '../../features/catalog/components/SearchBar'
@@ -10,6 +10,19 @@ export default function Navbar() {
   const { user, profile } = useAuth()
   const { categories, homepageContent } = useCatalog()
   const [menuOpen, setMenuOpen] = useState(false)
+  const [hasScrolled, setHasScrolled] = useState(false)
+  const { pathname, search } = useLocation()
+  const searchParams = new URLSearchParams(search)
+  const selectedCategory = searchParams.get('category')
+  const selectedSort = searchParams.get('sort')
+  const isShop = pathname === '/shop'
+
+  useEffect(() => {
+    const updateScrollState = () => setHasScrolled(window.scrollY > 12)
+    updateScrollState()
+    window.addEventListener('scroll', updateScrollState, { passive: true })
+    return () => window.removeEventListener('scroll', updateScrollState)
+  }, [])
 
   return (
     <>
@@ -18,7 +31,7 @@ export default function Navbar() {
         <span className="announcement__desktop">A little something for your everyday.</span>
         <Link to="/shop">Explore the edit <ArrowRight size={13} /></Link>
       </div>
-      <header className="site-header">
+      <header className={`site-header${hasScrolled ? ' site-header--scrolled' : ''}`}>
         <button
           className="icon-button mobile-menu-toggle"
           type="button"
@@ -32,9 +45,18 @@ export default function Navbar() {
           {homepageContent.logoName}<span>.</span>
         </Link>
         <nav className={`primary-nav${menuOpen ? ' primary-nav--open' : ''}`} aria-label="Main navigation">
-          <Link to="/shop" onClick={() => setMenuOpen(false)}>Shop all</Link>
+          <Link
+            className={isShop && !selectedCategory && selectedSort !== 'newest' ? 'is-active' : undefined}
+            aria-current={isShop && !selectedCategory && selectedSort !== 'newest' ? 'page' : undefined}
+            to="/shop"
+            onClick={() => setMenuOpen(false)}
+          >
+            Shop all
+          </Link>
           {categories.slice(0, 3).map((category) => (
             <Link
+              className={selectedCategory === (category.slug || category.name.toLowerCase()) ? 'is-active' : undefined}
+              aria-current={selectedCategory === (category.slug || category.name.toLowerCase()) ? 'page' : undefined}
               to={`/shop?category=${encodeURIComponent(category.slug || category.name.toLowerCase())}`}
               onClick={() => setMenuOpen(false)}
               key={category.id}
@@ -42,9 +64,23 @@ export default function Navbar() {
               {category.name}
             </Link>
           ))}
-          <Link to="/shop?sort=newest" onClick={() => setMenuOpen(false)}>New arrivals</Link>
+          <Link
+            className={isShop && selectedSort === 'newest' ? 'is-active' : undefined}
+            aria-current={isShop && selectedSort === 'newest' ? 'page' : undefined}
+            to="/shop?sort=newest"
+            onClick={() => setMenuOpen(false)}
+          >
+            New arrivals
+          </Link>
           {profile?.user_roles?.role_name === 'admin' && (
-            <Link to="/admin" onClick={() => setMenuOpen(false)}>Admin</Link>
+            <Link
+              className={pathname.startsWith('/admin') ? 'is-active' : undefined}
+              aria-current={pathname.startsWith('/admin') ? 'page' : undefined}
+              to="/admin"
+              onClick={() => setMenuOpen(false)}
+            >
+              Admin
+            </Link>
           )}
         </nav>
         <div className="header-actions">

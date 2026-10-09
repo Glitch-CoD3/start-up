@@ -10,6 +10,7 @@ export const ORDER_STATUSES = [
   'cancelled',
   'returned',
 ]
+export const LOW_STOCK_THRESHOLD = 20
 
 const PRODUCT_FIELDS =
   'id,category_id,brand_id,product_name,url_slug,description,short_description,price,discount_type,discount_value,stock_quantity,status,created_at,updated_at'
@@ -426,20 +427,28 @@ export async function deleteAdminProduct(id) {
 
 export async function getInventory() {
   const client = await requireSupabase()
-  const products = unwrap(
-    await client
+  const [productsResult, variantsResult, reservationsResult] = await Promise.all([
+    client
       .from('products')
       .select('id,category_id,product_name,stock_quantity')
       .is('deleted_at', null)
       .order('product_name'),
-  ) ?? []
-  const variants = unwrap(
-    await client
+    client
       .from('product_variants')
       .select('id,product_id,colors,sizes,price,stock_quantity')
       .is('deleted_at', null)
       .order('created_at'),
-  ) ?? []
+    client.rpc('get_active_stock_reservations'),
+  ])
+  const products = unwrap(productsResult) ?? []
+  const variants = unwrap(variantsResult) ?? []
+  const reservations = unwrap(reservationsResult) ?? []
+  const reservedByStockId = new Map(
+    reservations.map((reservation) => [
+      `${reservation.product_id}:${reservation.product_variant_id ?? ''}`,
+      Number(reservation.quantity),
+    ]),
+  )
   const categoryIds = [...new Set(products.map((product) => product.category_id).filter(Boolean))]
   const categories = unwrap(
     categoryIds.length
@@ -458,6 +467,12 @@ export async function getInventory() {
         category_id: product.category_id ?? '__uncategorized__',
         category_name: categoryById.get(product.category_id) ?? 'Uncategorized',
         product_name: product.product_name,
+        reserved_quantity: reservedByStockId.get(`${product.id}:${variant.id}`) ?? 0,
+        available_quantity: Math.max(
+          0,
+          Number(variant.stock_quantity || 0) -
+            (reservedByStockId.get(`${product.id}:${variant.id}`) ?? 0),
+        ),
       }
     })
     .concat(
@@ -472,6 +487,12 @@ export async function getInventory() {
           colors: null,
           sizes: null,
           stock_quantity: product.stock_quantity,
+          reserved_quantity: reservedByStockId.get(`${product.id}:`) ?? 0,
+          available_quantity: Math.max(
+            0,
+            Number(product.stock_quantity || 0) -
+              (reservedByStockId.get(`${product.id}:`) ?? 0),
+          ),
           is_product_stock: true,
         })),
     )
@@ -518,7 +539,7 @@ export async function getAdminOrders() {
   const orders = unwrap(
     await client
       .from('orders')
-      .select('id,order_number,user_id,total_amount,net_amount,status,payment_status,payment_method,payment_account_reference,transaction_number,created_at')
+      .select('id,order_number,user_id,total_amount,net_amount,status,payment_status,payment_method,payment_account_reference,transaction_number,cancellation_request_status,cancellation_requested_at,created_at')
       .order('created_at', { ascending: false }),
   ) ?? []
   if (!orders.length) return []
@@ -530,12 +551,46 @@ export async function getAdminOrders() {
   return orders.map((order) => ({ ...order, customer: customerById.get(order.user_id) ?? null }))
 }
 
+export async function getAdminCancelledOrders(offset = 0) {
+  const client = await requireSupabase()
+  const result = unwrap(await client.rpc('get_admin_cancelled_orders', {
+    p_limit: 50,
+    p_offset: offset,
+  })) ?? { orders: [], total: 0 }
+  const orders = result.orders ?? []
+  if (!orders.length) return { orders: [], total: Number(result.total || 0) }
+  const userIds = [...new Set(orders.map((order) => order.user_id).filter(Boolean))]
+  const customers = unwrap(
+    await client.from('users').select('id,full_name,phone_number').in('id', userIds),
+  ) ?? []
+  const customerById = new Map(customers.map((customer) => [customer.id, customer]))
+  return {
+    orders: orders.map((order) => ({
+      ...order,
+      customer: customerById.get(order.user_id) ?? null,
+      items: Array.isArray(order.items) ? order.items : [],
+    })),
+    total: Number(result.total || 0),
+  }
+}
+
+export async function getAdminAnalytics(startDate, endDate) {
+  if (!startDate || !endDate || startDate > endDate) {
+    throw new Error('Choose a valid analytics date range.')
+  }
+  const client = await requireSupabase()
+  return unwrap(await client.rpc('get_admin_analytics', {
+    p_start_date: startDate,
+    p_end_date: endDate,
+  }))
+}
+
 export async function getAdminOrder(id) {
   const client = await requireSupabase()
   const order = unwrap(
     await client
       .from('orders')
-      .select('id,order_number,user_id,total_amount,discount_amount,shipping_charge,net_amount,status,payment_status,payment_method,payment_account_reference,transaction_number,created_at,updated_at')
+      .select('id,order_number,user_id,total_amount,discount_amount,shipping_charge,net_amount,status,payment_status,payment_method,payment_account_reference,transaction_number,inventory_committed,cancellation_request_status,cancellation_requested_at,created_at,updated_at')
       .eq('id', id)
       .maybeSingle(),
   )
@@ -563,10 +618,20 @@ export async function getAdminOrder(id) {
 export async function updateAdminOrder(id, values) {
   const client = await requireSupabase()
   if (!ORDER_STATUSES.includes(values.status)) throw new Error('Choose a valid order status.')
-  const { error } = await client
-    .from('orders')
-    .update({ status: values.status, payment_status: values.payment_status.trim() })
-    .eq('id', id)
+  const { error } = await client.rpc('update_admin_order', {
+    p_order_id: id,
+    p_status: values.status,
+    p_payment_status: values.payment_status.trim(),
+  })
+  if (error) throw error
+}
+
+export async function reviewOrderCancellation(id, approve) {
+  const client = await requireSupabase()
+  const { error } = await client.rpc('review_order_cancellation', {
+    p_order_id: id,
+    p_approve: approve,
+  })
   if (error) throw error
 }
 
@@ -615,6 +680,28 @@ export async function saveHomepageContent(content) {
   const client = await requireSupabase()
   const { data, error } = await client.rpc('update_homepage_content', {
     p_content: content,
+  })
+  if (error) throw error
+  return data
+}
+
+export async function getAdminCustomerQueries() {
+  const client = await requireSupabase()
+  const { data, error } = await client.rpc('get_admin_customer_queries')
+  if (error) throw error
+  return data ?? []
+}
+
+export async function replyToCustomerQuery(queryId, message) {
+  const cleanMessage = message.trim()
+  if (!cleanMessage || cleanMessage.length > 5000) {
+    throw new Error('Reply must contain 1 to 5000 characters.')
+  }
+
+  const client = await requireSupabase()
+  const { data, error } = await client.rpc('reply_to_customer_query', {
+    p_query_id: queryId,
+    p_message: cleanMessage,
   })
   if (error) throw error
   return data

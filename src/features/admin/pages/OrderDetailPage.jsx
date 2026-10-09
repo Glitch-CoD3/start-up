@@ -1,8 +1,8 @@
-import { ArrowLeft, Save } from 'lucide-react'
+import { ArrowLeft, Check, Save, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { getAdminOrder, updateAdminOrder } from '../api'
+import { getAdminOrder, reviewOrderCancellation, updateAdminOrder } from '../api'
 import StatusSelect from '../components/StatusSelect'
 
 const money = (value) => `৳${Number(value || 0).toLocaleString('en-BD', { minimumFractionDigits: 2 })}`
@@ -14,6 +14,7 @@ export default function OrderDetailPage() {
   const [paymentStatus, setPaymentStatus] = useState('UNPAID')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [reviewingCancellation, setReviewingCancellation] = useState(false)
   const [error, setError] = useState('')
 
   useEffect(() => {
@@ -41,12 +42,34 @@ export default function OrderDetailPage() {
     setError('')
     try {
       await updateAdminOrder(id, { status, payment_status: paymentStatus })
+      const updatedOrder = await getAdminOrder(id)
+      setOrder(updatedOrder)
+      setStatus(updatedOrder.status)
+      setPaymentStatus(updatedOrder.payment_status)
       toast.success('Order updated.')
     } catch (cause) {
       console.error('Could not update order.', cause)
       setError(cause.message || 'Order could not be updated.')
     } finally {
       setSaving(false)
+    }
+  }
+
+  const reviewCancellation = async (approve) => {
+    setReviewingCancellation(true)
+    setError('')
+    try {
+      await reviewOrderCancellation(id, approve)
+      const updatedOrder = await getAdminOrder(id)
+      setOrder(updatedOrder)
+      setStatus(updatedOrder.status)
+      setPaymentStatus(updatedOrder.payment_status)
+      toast.success(approve ? 'Cancellation request approved.' : 'Cancellation request declined.')
+    } catch (cause) {
+      console.error('Could not review cancellation request.', cause)
+      setError(cause.message || 'Cancellation request could not be reviewed.')
+    } finally {
+      setReviewingCancellation(false)
     }
   }
 
@@ -89,7 +112,41 @@ export default function OrderDetailPage() {
             <p>{order.payment_method === 'bank_card' ? 'Card last 4 digits' : 'Sender number'}: {order.payment_account_reference || 'Not provided'}</p>
             <p>{order.transaction_number || 'No transaction reference provided.'}</p>
             <span className={`admin-pill admin-pill--${order.payment_status === 'PAID' ? 'delivered' : 'pending'}`}>{order.payment_status?.replaceAll('_', ' ') || 'UNPAID'}</span>
+            <p className="admin-message">
+              {order.inventory_committed
+                ? 'Stock has been deducted for this order.'
+                : 'Stock is reserved while payment is pending. Unpaid orders are cancelled after 24 hours.'}
+            </p>
           </section>
+          {order.cancellation_request_status && (
+            <section className="admin-form-card">
+              <span className="eyebrow">Cancellation request</span>
+              <h2 className="admin-card-title">{order.cancellation_request_status}</h2>
+              {order.cancellation_requested_at && (
+                <p>Requested {new Date(order.cancellation_requested_at).toLocaleString()}</p>
+              )}
+              {order.cancellation_request_status === 'requested' && (
+                <div className="admin-row-actions">
+                  <button
+                    className="admin-button"
+                    type="button"
+                    onClick={() => reviewCancellation(true)}
+                    disabled={reviewingCancellation}
+                  >
+                    <Check size={15} /> Approve
+                  </button>
+                  <button
+                    className="admin-button admin-button--light"
+                    type="button"
+                    onClick={() => reviewCancellation(false)}
+                    disabled={reviewingCancellation}
+                  >
+                    <X size={15} /> Decline
+                  </button>
+                </div>
+              )}
+            </section>
+          )}
           <section className="admin-form-card">
             <span className="eyebrow">Delivery address</span>
             {order.shipping_address ? (
@@ -98,8 +155,28 @@ export default function OrderDetailPage() {
           </section>
           <form className="admin-form-card admin-order-update" onSubmit={save}>
             <div className="admin-section__heading"><div><span className="eyebrow">Fulfilment</span><h2>Update order</h2></div></div>
-            <StatusSelect value={status} onChange={setStatus} disabled={saving} />
-            <label className="admin-field"><span>Payment status</span><input required maxLength="100" value={paymentStatus} onChange={(event) => setPaymentStatus(event.target.value)} /></label>
+            <StatusSelect
+              value={status}
+              onChange={setStatus}
+              disabled={saving}
+              disabledStatuses={paymentStatus === 'PAID' ? ['cancelled'] : []}
+            />
+            <label className="admin-field">
+              <span>Payment status</span>
+              <select
+                value={['PAID', 'UNPAID', 'REFUNDED'].includes(paymentStatus) ? paymentStatus : 'UNPAID'}
+                onChange={(event) => setPaymentStatus(event.target.value)}
+                disabled={saving || (order.payment_status === 'PAID' && status !== 'returned')}
+              >
+                <option value="UNPAID">Unpaid</option>
+                <option value="PAID">Paid</option>
+                <option value="REFUNDED">Refunded</option>
+              </select>
+              <small>
+                Paid orders cannot be cancelled. For a returned order, set payment to unpaid or refunded when appropriate.
+                Marking an order paid deducts its reserved quantity from inventory.
+              </small>
+            </label>
             <button className="admin-button" type="submit" disabled={saving}><Save size={15} /> {saving ? 'Saving…' : 'Save updates'}</button>
           </form>
         </div>

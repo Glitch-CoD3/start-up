@@ -147,7 +147,11 @@ export default function ProductDetailPage() {
               <Heart size={19} />
             </button>
           </div>
-          <p className="stock-note">{stock > 0 ? 'In stock and ready to find a home.' : 'This one is taking a little break.'}</p>
+          <p className={`stock-note${stock < 1 ? ' is-unavailable' : ''}`} aria-live="polite">
+            {stock > 0
+              ? `${stock} ${stock === 1 ? 'unit' : 'units'} in stock and ready to find a home.`
+              : 'Out of stock — this one is taking a little break.'}
+          </p>
           <div className="detail-perks">
             <div><Truck size={17} /><span>Delivery fee based on your address</span></div>
             <div><ShieldCheck size={17} /><span>Easy exchanges within 7 days</span></div>

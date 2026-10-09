@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { getInventory } from '../api'
+import { getInventory, LOW_STOCK_THRESHOLD } from '../api'
 import DataTable from '../components/DataTable'
 import StockEditor from '../components/StockEditor'
 import useStockUpdate from '../hooks/useStockUpdate'
@@ -41,7 +41,9 @@ export default function InventoryPage() {
     { key: 'product_name', label: 'Product' },
     { key: 'colors', label: 'Color', render: (variant) => variant.colors || (variant.is_product_stock ? 'Base stock' : '—') },
     { key: 'sizes', label: 'Size', render: (variant) => variant.sizes || '—' },
-    { key: 'stock_quantity', label: 'Available', render: (variant) => <StockEditor key={`${variant.id}-${variant.stock_quantity}`} value={variant.stock_quantity} saving={savingId === variant.id} onSave={async (quantity) => { if (await saveStock(variant, quantity)) await refresh() }} /> },
+    { key: 'stock_quantity', label: 'On hand', render: (variant) => <StockEditor key={`${variant.id}-${variant.stock_quantity}`} value={variant.stock_quantity} saving={savingId === variant.id} onSave={async (quantity) => { if (await saveStock(variant, quantity)) await refresh() }} /> },
+    { key: 'reserved_quantity', label: 'Reserved' },
+    { key: 'available_quantity', label: 'Available' },
   ]
   const categoryProducts = new Map()
   for (const item of inventory) {
@@ -63,6 +65,9 @@ export default function InventoryPage() {
     ? inventory.filter((item) => item.category_id === selectedCategoryId)
     : inventory
   const selectedProductCount = new Set(filteredInventory.map((item) => item.product_id)).size
+  const lowStockItems = filteredInventory.filter(
+    (item) => item.available_quantity < LOW_STOCK_THRESHOLD,
+  )
 
   return (
     <div className="admin-page">
@@ -74,6 +79,21 @@ export default function InventoryPage() {
         {!loading && <span className="inventory-category-total">{selectedProductCount} products</span>}
       </header>
       {(error || saveError) && <div className="notice notice--error" role="alert">{error || saveError}</div>}
+      {!loading && lowStockItems.length > 0 && (
+        <div className="notice notice--warning" role="alert">
+          <strong>{lowStockItems.length} {lowStockItems.length === 1 ? 'item is' : 'items are'} low in stock.</strong>
+          {' '}Available quantity is below {LOW_STOCK_THRESHOLD} after pending order reservations.
+          <ul>
+            {lowStockItems.slice(0, 5).map((item) => (
+              <li key={item.id}>
+                {item.product_name}{item.colors ? ` · ${item.colors}` : ''}{item.sizes ? ` · ${item.sizes}` : ''}
+                {' — '}{item.available_quantity} available
+              </li>
+            ))}
+          </ul>
+          {lowStockItems.length > 5 && <span>And {lowStockItems.length - 5} more.</span>}
+        </div>
+      )}
       {loading ? <p className="admin-message">Loading inventory…</p> : (
         <>
           <nav className="inventory-category-bar" aria-label="Filter inventory by category">

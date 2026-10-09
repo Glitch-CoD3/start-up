@@ -1,4 +1,4 @@
-import { ArrowLeft, Boxes, Image, Layout as LayoutIcon, LayoutDashboard, LogOut, Package, Settings, Shapes, ShoppingBag, Tag } from 'lucide-react'
+import { ArrowLeft, Ban, Boxes, ChartPie, Image, Layout as LayoutIcon, LayoutDashboard, LogOut, MessageCircle, Package, Settings, Shapes, ShoppingBag, Tag } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
@@ -17,12 +17,18 @@ const adminPageLoaders = [
   () => import('../../features/admin/pages/LayoutPage'),
   () => import('../../features/admin/pages/SettingsPage'),
   () => import('../../features/admin/pages/OrdersPage'),
+  () => import('../../features/admin/pages/CancelledOrdersPage'),
+  () => import('../../features/admin/pages/AnalyticsPage'),
   () => import('../../features/admin/pages/OrderDetailPage'),
+  () => import('../../features/admin/pages/CustomerQueriesPage'),
 ]
 
 const navigation = [
   { to: '/admin', label: 'Overview', icon: LayoutDashboard, end: true },
   { to: '/admin/orders', label: 'Orders', icon: ShoppingBag },
+  { to: '/admin/cancelled-orders', label: 'Cancelled orders', icon: Ban },
+  { to: '/admin/analytics', label: 'Analytics', icon: ChartPie },
+  { to: '/admin/queries', label: 'Customer queries', icon: MessageCircle },
   { to: '/admin/inventory', label: 'Inventory', icon: Boxes },
   { to: '/admin/products', label: 'Products', icon: Package },
   { to: '/admin/categories', label: 'Categories', icon: Shapes },

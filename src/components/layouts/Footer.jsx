@@ -20,6 +20,7 @@ export default function Footer() {
           <Link to="/shop">Shop all</Link>
           <Link to="/shop?sort=newest">New arrivals</Link>
           <Link to="/cart">Your shopping bag</Link>
+          <Link to="/contact">Contact support</Link>
         </div>
         <div className="footer-column">
           <p className="footer-heading">We’re here</p>
