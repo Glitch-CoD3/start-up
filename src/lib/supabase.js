@@ -21,7 +21,12 @@ async function supabaseFetch(input, init) {
   if (sessionExpiredHandler && [400, 401, 403].includes(response.status)) {
     const body = await response.clone().text()
     if (isExpiredTokenResponse(response, body)) {
-      await sessionExpiredHandler()
+      const handleExpiredSession = sessionExpiredHandler
+      Promise.resolve()
+        .then(() => handleExpiredSession?.())
+        .catch((cause) => {
+          console.error('Could not handle an expired Supabase session.', cause)
+        })
       return new Response(JSON.stringify({
         message: 'Your session has expired. Please log in again.',
         code: 'session_expired',

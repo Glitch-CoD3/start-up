@@ -1,27 +1,10 @@
 import { ArrowLeft, Ban, Boxes, ChartPie, Image, Layout as LayoutIcon, LayoutDashboard, LogOut, MessageCircle, Package, Settings, Shapes, ShoppingBag, Tag } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { useAuth } from '../../app/providers'
 import { requireSupabase } from '../../lib/supabase'
 import ThemeToggle from '../ui/ThemeToggle'
-
-const adminPageLoaders = [
-  () => import('../../features/admin/pages/DashboardPage'),
-  () => import('../../features/admin/pages/ProductsPage'),
-  () => import('../../features/admin/pages/ProductEditPage'),
-  () => import('../../features/admin/pages/InventoryPage'),
-  () => import('../../features/admin/pages/CategoriesPage'),
-  () => import('../../features/admin/pages/BrandsPage'),
-  () => import('../../features/admin/pages/FeatureImagesPage'),
-  () => import('../../features/admin/pages/LayoutPage'),
-  () => import('../../features/admin/pages/SettingsPage'),
-  () => import('../../features/admin/pages/OrdersPage'),
-  () => import('../../features/admin/pages/CancelledOrdersPage'),
-  () => import('../../features/admin/pages/AnalyticsPage'),
-  () => import('../../features/admin/pages/OrderDetailPage'),
-  () => import('../../features/admin/pages/CustomerQueriesPage'),
-]
 
 const navigation = [
   { to: '/admin', label: 'Overview', icon: LayoutDashboard, end: true },
@@ -42,14 +25,6 @@ export default function AdminLayout() {
   const { user } = useAuth()
   const [signingOut, setSigningOut] = useState(false)
   const navigate = useNavigate()
-
-  useEffect(() => {
-    adminPageLoaders.forEach((loadPage) => {
-      loadPage().catch((cause) => {
-        console.error('Could not preload an admin page.', cause)
-      })
-    })
-  }, [])
 
   const signOut = async () => {
     setSigningOut(true)

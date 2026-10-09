@@ -132,12 +132,17 @@ export function AuthProvider({ children }) {
   const [sessionExpired, setSessionExpired] = useState(false)
   const profileUserId = useRef(null)
   const currentPath = useRef(location.pathname)
+  const navigateRef = useRef(navigate)
   const handlingExpiredSession = useRef(false)
   const expireSessionRef = useRef(null)
 
   useEffect(() => {
     currentPath.current = location.pathname
   }, [location.pathname])
+
+  useEffect(() => {
+    navigateRef.current = navigate
+  }, [navigate])
 
   useEffect(() => {
     if (!isSupabaseConfigured) return undefined
@@ -158,7 +163,7 @@ export function AuthProvider({ children }) {
           setError('')
           setProfileLoading(false)
           setSessionLoading(false)
-          navigate('/login', {
+          navigateRef.current('/login', {
             replace: true,
             state: { sessionExpired: true, from: currentPath.current },
           })
@@ -217,7 +222,7 @@ export function AuthProvider({ children }) {
       subscription?.unsubscribe()
       removeSessionExpiredHandler?.()
     }
-  }, [navigate])
+  }, [])
 
   // The profile id is the same UUID as the Supabase Auth user id.
   const authId = user?.id
@@ -229,7 +234,6 @@ export function AuthProvider({ children }) {
       })
       return undefined
     }
-
     let active = true
     requireSupabase()
       .then((client) =>
