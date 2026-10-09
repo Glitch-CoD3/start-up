@@ -11,7 +11,7 @@ export default function Footer() {
         <div className="footer-brand">
           <Link className="wordmark wordmark--footer" to="/">{homepageContent.logoName}<span>.</span></Link>
           <p>Thoughtful pieces for wherever<br />the day takes you.</p>
-          <a className="social-link" href="https://instagram.com" target="_blank" rel="noreferrer">
+          <a className="social-link" href="https://bd-trend.netlify.app/" target="_blank" rel="noreferrer">
             <Camera size={17} /> Follow along <ArrowUpRight size={14} />
           </a>
         </div>

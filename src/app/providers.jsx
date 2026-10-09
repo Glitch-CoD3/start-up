@@ -8,10 +8,10 @@ import {
   useRef,
   useState,
 } from 'react'
-import { useLocation } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { getCatalog } from '../features/catalog/api'
 import { DEFAULT_HOMEPAGE_CONTENT } from '../features/catalog/homepageContent'
-import { isSupabaseConfigured, requireSupabase } from '../lib/supabase'
+import { isExpiredSessionError, isSupabaseConfigured, onSessionExpired, requireSupabase } from '../lib/supabase'
 
 const CatalogContext = createContext(null)
 const AuthContext = createContext(null)
@@ -105,12 +105,13 @@ export function CatalogProvider({ children }) {
       featuredImagePath,
       setFeaturedImagePath,
       homepageContent,
+      setHomepageContent,
       pricingWarning,
       loading,
       error,
       refreshCatalog,
     }),
-    [products, categories, featureImages, featuredImagePath, homepageContent, pricingWarning, loading, error, refreshCatalog],
+    [products, categories, featureImages, featuredImagePath, homepageContent, setHomepageContent, pricingWarning, loading, error, refreshCatalog],
   )
 
   useEffect(() => {
@@ -121,21 +122,58 @@ export function CatalogProvider({ children }) {
 }
 
 export function AuthProvider({ children }) {
+  const location = useLocation()
+  const navigate = useNavigate()
   const [user, setUser] = useState(null)
   const [profile, setProfile] = useState(null)
   const [sessionLoading, setSessionLoading] = useState(isSupabaseConfigured)
   const [profileLoading, setProfileLoading] = useState(false)
   const [error, setError] = useState('')
+  const [sessionExpired, setSessionExpired] = useState(false)
   const profileUserId = useRef(null)
+  const currentPath = useRef(location.pathname)
+  const handlingExpiredSession = useRef(false)
+  const expireSessionRef = useRef(null)
 
-  // session restore: same as before, but use setSessionLoading
+  useEffect(() => {
+    currentPath.current = location.pathname
+  }, [location.pathname])
+
   useEffect(() => {
     if (!isSupabaseConfigured) return undefined
 
     let active = true
     let subscription
+    let removeSessionExpiredHandler
+    let expireCurrentSession
     requireSupabase()
       .then(async (client) => {
+        if (!active) return
+        const handleSessionExpired = async () => {
+          if (!active || handlingExpiredSession.current) return
+          handlingExpiredSession.current = true
+          setSessionExpired(true)
+          setUser(null)
+          setProfile(null)
+          setError('')
+          setProfileLoading(false)
+          setSessionLoading(false)
+          navigate('/login', {
+            replace: true,
+            state: { sessionExpired: true, from: currentPath.current },
+          })
+          try {
+            const { error: signOutError } = await client.auth.signOut({ scope: 'local' })
+            if (signOutError) {
+              console.error('Could not clear the expired local session.', signOutError)
+            }
+          } catch (cause) {
+            console.error('Could not clear the expired local session.', cause)
+          }
+        }
+        expireCurrentSession = handleSessionExpired
+        expireSessionRef.current = handleSessionExpired
+        removeSessionExpiredHandler = onSessionExpired(handleSessionExpired)
         const { data, error: sessionError } = await client.auth.getSession()
         if (sessionError) throw sessionError
         if (!active) return
@@ -143,9 +181,13 @@ export function AuthProvider({ children }) {
         profileUserId.current = initialUser?.id ?? null
         setUser(initialUser)
         setProfileLoading(Boolean(initialUser))
-        const result = client.auth.onAuthStateChange((_event, session) => {
+        const result = client.auth.onAuthStateChange((event, session) => {
           const nextUser = session?.user ?? null
           const nextUserId = nextUser?.id ?? null
+          if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+            handlingExpiredSession.current = false
+            setSessionExpired(false)
+          }
           if (profileUserId.current !== nextUserId) {
             profileUserId.current = nextUserId
             setProfileLoading(Boolean(nextUser))
@@ -159,7 +201,11 @@ export function AuthProvider({ children }) {
       })
       .catch((cause) => {
         console.error('Could not restore the saved session.', cause)
-        if (active) setError(cause.message || 'Could not restore your session.')
+        if (isExpiredSessionError(cause.message)) {
+          expireCurrentSession?.()
+        } else if (active) {
+          setError(cause.message || 'Could not restore your session.')
+        }
       })
       .finally(() => {
         if (active) setSessionLoading(false)
@@ -167,9 +213,11 @@ export function AuthProvider({ children }) {
 
     return () => {
       active = false
+      expireSessionRef.current = null
       subscription?.unsubscribe()
+      removeSessionExpiredHandler?.()
     }
-  }, [])
+  }, [navigate])
 
   // The profile id is the same UUID as the Supabase Auth user id.
   const authId = user?.id
@@ -197,7 +245,12 @@ export function AuthProvider({ children }) {
       })
       .catch((cause) => {
         console.error('Could not load your customer record.', cause)
-        if (active) setError(cause.message || 'Could not load your account.')
+        if (!active) return
+        if (isExpiredSessionError(cause.message)) {
+          expireSessionRef.current?.()
+        } else {
+          setError(cause.message || 'Could not load your account.')
+        }
       })
       .finally(() => {
         if (active) setProfileLoading(false)
@@ -215,8 +268,9 @@ export function AuthProvider({ children }) {
       customerId: profile?.id ?? null,
       loading: sessionLoading || profileLoading,
       error,
+      sessionExpired,
     }),
-    [user, profile, sessionLoading, profileLoading, error],
+    [user, profile, sessionLoading, profileLoading, error, sessionExpired],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

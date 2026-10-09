@@ -29,7 +29,7 @@ export default function Navbar() {
       <div className="announcement">
         <span>Delivery charges shown at checkout</span>
         <span className="announcement__desktop">A little something for your everyday.</span>
-        <Link to="/shop">Explore the edit <ArrowRight size={13} /></Link>
+        <Link to="/shop">Explore the new collection <ArrowRight size={13} /></Link>
       </div>
       <header className={`site-header${hasScrolled ? ' site-header--scrolled' : ''}`}>
         <button
@@ -42,7 +42,8 @@ export default function Navbar() {
           {menuOpen ? <X size={21} /> : <Menu size={21} />}
         </button>
         <Link className="wordmark" to="/" aria-label={`${homepageContent.logoName} home`}>
-          {homepageContent.logoName}<span>.</span>
+          <img className="wordmark__icon" src={homepageContent.logoIcon || '/icon.svg'} alt="" aria-hidden="true" />
+          <span className="wordmark__name">{homepageContent.logoName}<span>.</span></span>
         </Link>
         <nav className={`primary-nav${menuOpen ? ' primary-nav--open' : ''}`} aria-label="Main navigation">
           <Link
@@ -64,14 +65,18 @@ export default function Navbar() {
               {category.name}
             </Link>
           ))}
-          <Link
+
+
+          {/* <Link
             className={isShop && selectedSort === 'newest' ? 'is-active' : undefined}
             aria-current={isShop && selectedSort === 'newest' ? 'page' : undefined}
             to="/shop?sort=newest"
             onClick={() => setMenuOpen(false)}
           >
             New arrivals
-          </Link>
+          </Link> */}
+
+          
           {profile?.user_roles?.role_name === 'admin' && (
             <Link
               className={pathname.startsWith('/admin') ? 'is-active' : undefined}

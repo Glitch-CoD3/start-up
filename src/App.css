@@ -346,6 +346,53 @@ border-color: var(--line);
   grid-column: 1 / -1;
 }
 
+.admin-logo-icon {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-top: 22px;
+  padding: 17px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.admin-logo-icon h3 {
+  margin: 6px 0;
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: 20px;
+  font-weight: 400;
+}
+
+.admin-logo-icon p {
+  max-width: 480px;
+  margin: 0;
+}
+
+.admin-logo-icon__controls {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 9px;
+}
+
+.admin-logo-icon__preview {
+  display: grid;
+  width: 58px;
+  height: 58px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid var(--line);
+  background: var(--surface-raised);
+}
+
+.admin-logo-icon__preview img {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+}
+
 .checkout-delivery-charge {
   display: flex;
   align-items: center;
@@ -414,6 +461,8 @@ border-color: var(--line);
 }
 
 .wordmark {
+  min-width: 0;
+  max-width: 100%;
   width: max-content;
   font-size: 20px;
   font-weight: 800;
@@ -421,11 +470,33 @@ border-color: var(--line);
   transition: color .2s ease;
 }
 
+.site-header .wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.wordmark__icon {
+  display: block;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 auto;
+  object-fit: contain;
+}
+
+.wordmark__name {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .wordmark:hover {
   color: var(--accent);
 }
 
-.wordmark span,
+.wordmark__name > span,
+.wordmark--footer > span,
 .auth-editorial__mark span,
 .manifesto__mark span {
   color: var(--accent);
@@ -3069,6 +3140,29 @@ html[data-theme='dark'] .inventory-category-tab.is-active span {
 }
 
 @media (max-width: 760px) {
+  .admin-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-sidebar {
+    position: static;
+    height: auto;
+  }
+
+  .admin-nav {
+    display: flex;
+    overflow-x: auto;
+    gap: 4px;
+    padding-top: 10px;
+    scrollbar-width: thin;
+  }
+
+  .admin-nav__link {
+    flex: 0 0 auto;
+  }
+}
+
+@media (max-width: 650px) {
   .app-shell {
     width: min(100% - 32px, 1440px);
   }
@@ -3105,6 +3199,15 @@ html[data-theme='dark'] .inventory-category-tab.is-active span {
   .wordmark {
     font-size: 17px;
     justify-self: start;
+  }
+
+  .wordmark__icon {
+    width: 26px;
+    height: 26px;
+  }
+
+  .site-header .wordmark {
+    gap: 7px;
   }
 
   .primary-nav {
@@ -3568,7 +3671,7 @@ html[data-theme='dark'] .inventory-category-tab.is-active span {
   .admin-shell {
     display: grid;
     min-height: 100vh;
-    grid-template-columns: 240px minmax(0, 1fr);
+    grid-template-columns: minmax(220px, 250px) minmax(0, 1fr);
     background: #f8f6f1;
   }
 
@@ -3608,7 +3711,9 @@ html[data-theme='dark'] .inventory-category-tab.is-active span {
 
   .admin-nav {
     display: grid;
+    min-height: 0;
     gap: 5px;
+    overflow-y: auto;
     padding-top: 22px;
   }
 
@@ -3674,6 +3779,7 @@ html[data-theme='dark'] .inventory-category-tab.is-active span {
   }
 
   .admin-page {
+    min-width: 0;
     width: min(100%, 1240px);
     margin: 0 auto;
     padding-bottom: 55px;
@@ -3799,13 +3905,16 @@ html[data-theme='dark'] .inventory-category-tab.is-active span {
   }
 
   .admin-table-wrap {
+    max-width: 100%;
     overflow-x: auto;
+    overscroll-behavior-x: contain;
     border: 1px solid var(--line);
     background: #fffdf9;
   }
 
   .admin-table {
     width: 100%;
+    min-width: 600px;
     border-collapse: collapse;
     color: #68655c;
     font-size: 11px;
@@ -4783,9 +4892,13 @@ html[data-theme='dark'] .inventory-category-tab.is-active span {
     margin-top: 18px;
   }
 
-  @media (max-width: 900px) {
+  @media (max-width: 1100px) {
     .admin-shell {
-      grid-template-columns: 190px minmax(0, 1fr);
+      grid-template-columns: 210px minmax(0, 1fr);
+    }
+
+    .admin-main {
+      padding: clamp(22px, 3vw, 36px);
     }
 
     .admin-stat-grid {
@@ -4793,7 +4906,7 @@ html[data-theme='dark'] .inventory-category-tab.is-active span {
     }
   }
 
-  @media (max-width: 650px) {
+  @media (max-width: 760px) {
     .checkout-page {
       padding: 20px 0 55px;
     }
@@ -4833,6 +4946,7 @@ html[data-theme='dark'] .inventory-category-tab.is-active span {
       overflow-x: auto;
       gap: 4px;
       padding-top: 10px;
+      scrollbar-width: thin;
     }
 
     .admin-nav__link {
@@ -4846,9 +4960,14 @@ html[data-theme='dark'] .inventory-category-tab.is-active span {
       display: flex;
       flex-wrap: wrap;
       align-items: center;
-      justify-content: space-between;
+      justify-content: flex-start;
+      gap: 6px 14px;
       margin-top: 10px;
       padding-top: 9px;
+    }
+
+    .admin-sidebar__footer > * {
+      min-width: 0;
     }
 
     .admin-sidebar__email {
@@ -4856,13 +4975,14 @@ html[data-theme='dark'] .inventory-category-tab.is-active span {
     }
 
     .admin-main {
-      padding: 24px 15px;
+      padding: 22px 16px;
     }
 
     .admin-page__heading {
       align-items: flex-start;
       flex-direction: column;
       gap: 14px;
+      margin-bottom: 22px;
     }
 
     .admin-stat-grid {
@@ -4890,5 +5010,46 @@ html[data-theme='dark'] .inventory-category-tab.is-active span {
     .admin-filter-form .admin-field,
     .admin-filter-form .admin-button {
       width: 100%;
+    }
+
+    .admin-logo-icon {
+      align-items: stretch;
+      flex-direction: column;
+      gap: 14px;
+      padding: 13px;
+    }
+
+    .admin-logo-icon__controls {
+      flex-wrap: wrap;
+    }
+  }
+
+  @media (max-width: 420px) {
+    .admin-sidebar {
+      padding-right: 10px;
+      padding-left: 10px;
+    }
+
+    .admin-main {
+      padding: 18px 11px;
+    }
+
+    .admin-stat-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .admin-stat-card {
+      grid-template-columns: 36px minmax(0, 1fr);
+      align-items: center;
+      column-gap: 11px;
+    }
+
+    .admin-stat-card__icon {
+      grid-row: span 2;
+    }
+
+    .admin-stat-card strong {
+      overflow-wrap: anywhere;
+      font-size: 22px;
     }
   }

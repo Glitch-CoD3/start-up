@@ -2,11 +2,19 @@ import { Link, Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../providers'
 
 export default function RequireAdmin({ children }) {
-  const { user, profile, loading, error } = useAuth()
+  const { user, profile, loading, error, sessionExpired } = useAuth()
   const location = useLocation()
 
   if (loading) return <div className="detail-loading" aria-label="Checking admin access"><span /></div>
-  if (!user) return <Navigate to="/login" replace state={{ from: location.pathname }} />
+  if (!user) {
+    return (
+      <Navigate
+        to="/login"
+        replace
+        state={{ from: location.pathname, sessionExpired: sessionExpired || location.state?.sessionExpired }}
+      />
+    )
+  }
   if (error) {
     return (
       <main className="page-message">

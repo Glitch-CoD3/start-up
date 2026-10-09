@@ -1,6 +1,6 @@
 import { ArrowLeft, ArrowRight, Eye, EyeOff, LockKeyhole, Mail, Sparkles, UserRound } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { useAuth } from '../../../app/providers'
 import { requireSupabase } from '../../../lib/supabase'
@@ -8,6 +8,7 @@ import { requireSupabase } from '../../../lib/supabase'
 export default function AuthPage({ mode }) {
   const isSignup = mode === 'signup'
   const { user } = useAuth()
+  const location = useLocation()
   const navigate = useNavigate()
   const [fullName, setFullName] = useState('')
   const [phone, setPhone] = useState('')
@@ -15,8 +16,12 @@ export default function AuthPage({ mode }) {
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [submitting, setSubmitting] = useState(false)
-  const [message, setMessage] = useState('')
-  const [isError, setIsError] = useState(false)
+  const [message, setMessage] = useState(() => (
+    !isSignup && location.state?.sessionExpired
+      ? 'Your session has expired. Please log in again.'
+      : ''
+  ))
+  const [isError, setIsError] = useState(() => !isSignup && Boolean(location.state?.sessionExpired))
 
   useEffect(() => {
     if (user) navigate('/', { replace: true })

@@ -1,6 +1,7 @@
 export const DEFAULT_HOMEPAGE_CONTENT = {
   browserTitle: 'Trendlama — Wear what feels like you',
   logoName: 'TRENDLAMA',
+  logoIcon: '/icon.svg',
   heroImageMode: 'static',
   heroEyebrow: 'The new everyday',
   heroHeading: 'Wear what',
